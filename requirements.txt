@@ -1,0 +1,6 @@
+scikit-learn
+torchserve
+torch-model-archiver
+torch
+transformers
+requests

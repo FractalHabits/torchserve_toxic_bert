@@ -1,0 +1,35 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Virtual environment directories
+.ts_venv/
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# PyTorch model files (if you don't want to track them)
+*.pth
+*.pt
+
+# Logs
+logs/
+*.log
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Other files
+*.egg-info/
+dist/
+build/
