@@ -1,12 +1,12 @@
 from typing import Dict
 
 import torch
+import torch.nn as nn
+import torch.optim as optim
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from torch.quantization import quantize_dynamic
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from ts.torch_handler.base_handler import BaseHandler
-
-from model_definition import get_model
-from tokenizer import get_tokenizer
-
 
 class TextHandler(BaseHandler):
   def initialize(self, context, toxic_threshold:float=0.5):
@@ -23,9 +23,12 @@ class TextHandler(BaseHandler):
     self.model.eval()
 
     def get_model(self, quantize=True):
-        print('Loading model...')
-        model = torch.load(self.model_dir + '/toxic_bert.pth')
-        print('Model loaded')
+
+        model_name = "unitary/toxic-bert"
+
+        # Using tqdm to show progress for model retrieval
+        print(f'Retrieving {model_name} from transformers...')
+        model = AutoModelForSequenceClassification.from_pretrained(model_name)
 
         if quantize:
             print('Quantizing model...')
@@ -34,6 +37,15 @@ class TextHandler(BaseHandler):
             for layer in layers_to_quantize:
                 model = quantize_dynamic(model, {layer}, dtype=torch.qint8)  # Quantize each layer
             print('Model quantized')
+
+        print('Saving model')
+        # Save the model
+        torch.save(model, 'toxic_bert.pth')  # Directly save the model object
+        print('Model saved')
+
+        print('Loading model...')
+        model = torch.load(self.model_dir + '/toxic_bert.pth')
+        print('Model loaded')
 
         return model
 

@@ -8,9 +8,9 @@ def predict_toxicity(text, threshold=0.1):
     try:
         print(f'Sending post request to {url}')
         response = requests.post(url, data=text)
+        print(f'Response: {response.json()}')
 
         response.raise_for_status()
-        print(f'Response: {response.json()}')
         return response.json()
     except requests.exceptions.RequestException as e:
         print(f"Error making request: {e}")
