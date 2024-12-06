@@ -1,35 +1,38 @@
 #!/bin/bash
 
-# Function to display process information for a given port
-function show_process_info {
+# Function to check and kill processes on a given port
+function kill_process_on_port {
+    # Declare a local variable 'port' to hold the port number passed to the function
     local port=$1
     echo "Checking port $port..."
-    netstat -ano | grep ":$port" | while read -r line ; do
-        pid=$(echo $line | awk '{print $5}')
-        echo "Port $port is used by PID $pid"
-        tasklist | grep $pid
-    done
+
+    # Use 'netstat' to list all network connections and filter for the specified port
+    # 'grep' is used to find lines containing the port number
+    # 'awk' extracts the fifth column, which is the PID of the process using the port
+    local pid=$(netstat -ano | grep ":$port" | awk '{print $5}')
+
+    # Check if a PID was found (i.e., if the variable 'pid' is not empty)
+    if [ -n "$pid" ]; then
+        echo "Port $port is used by PID $pid. Terminating process..."
+        # Use 'taskkill' to forcefully terminate the process with the found PID
+        # '//F' forces the termination, and '//PID' specifies the process ID
+        taskkill //F //PID $pid
+    else
+        # If no PID was found, print a message indicating no process is using the port
+        echo "No process is using port $port."
+    fi
 }
 
-# Check and display processes using specific ports
-show_process_info 8080
-show_process_info 8081
-show_process_info 8082
-
-# Kill any existing torchserve processes
-echo 'Killing any existing torchserve processes...'
-taskkill //F //IM "torchserve.exe" //T 2>/dev/null || true
-echo 'Torchserve processes killed'
+# Loop over the list of ports: 8080, 8081, and 8082
+for port in 8080 8081 8082; do
+    # Call the function 'kill_process_on_port' with the current port number
+    kill_process_on_port $port
+done
 
 # Remove PID file if it exists
 echo 'Removing PID file...'
 rm -f /c/Users/User/AppData/Local/Temp/.model_server.pid
 echo 'PID file removed'
-
-# Create model store directory if it doesn't exist
-echo 'Creating model store directory...'
-mkdir -p model_store
-echo 'Model store directory created'
 
 # Archive the model with force flag
 echo 'Archiving model...'
@@ -37,34 +40,14 @@ torch-model-archiver --model-name toxic_bert \
                     --version 1.0 \
                     --model-file toxic_bert.pth \
                     --handler text_handler.py \
-                    --extra-files "model_definition.py, tokenizer.py" \
                     --export-path model_store \
-                    --force > /dev/null 2>&1  # Redirect output to /dev/null
-                    #--force > archiver_output.log 2>&1 
+                    --force
 echo 'Model archived'
 
-# Start TorchServe with config
 echo 'Starting TorchServe with config...'
 torchserve --start \
            --model-store model_store \
            --models toxic_bert=toxic_bert.mar \
            --disable-token-auth \
            --ts-config config.properties \
-           --ncs > torchserve_output.log 2>&1 & # Log output to a file
-            ##--force > /dev/null 2>&1  # Redirect both stdout and stderr to /dev/null    
-# Check if the log file was created
-if [ ! -f torchserve_output.log ]; then
-    echo "Log file not created. There may have been an error starting TorchServe."
-else
-    # Check the health of TorchServe
-    echo 'Checking TorchServe health...'
-    curl -s http://127.0.0.1:8081/ping  # Check if the server is running
-
-    if [ $? -eq 0 ]; then
-        echo "TorchServe started successfully. Use Ctrl+C to stop the server."
-    else
-        echo "TorchServe failed to start. Check the logs for more details."
-        #echo "TorchServe logs:"
-        #cat torchserve_output.log  # Display the log file contents
-    fi
-fi
+           --ncs #> torchserve_output.log 2>&1 & # Log output to a file
