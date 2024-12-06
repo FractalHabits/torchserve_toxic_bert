@@ -1,8 +1,24 @@
 #!/bin/bash
 
+# Function to display process information for a given port
+function show_process_info {
+    local port=$1
+    echo "Checking port $port..."
+    netstat -ano | grep ":$port" | while read -r line ; do
+        pid=$(echo $line | awk '{print $5}')
+        echo "Port $port is used by PID $pid"
+        tasklist | grep $pid
+    done
+}
+
+# Check and display processes using specific ports
+show_process_info 8080
+show_process_info 8081
+show_process_info 8082
+
 # Kill any existing torchserve processes
 echo 'Killing any existing torchserve processes...'
-taskkill /F /IM "torchserve.exe" /T 2>/dev/null || true
+taskkill //F //IM "torchserve.exe" //T 2>/dev/null || true
 echo 'Torchserve processes killed'
 
 # Remove PID file if it exists
