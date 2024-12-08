@@ -38,3 +38,4 @@ dist/
 build/
 backup/
 commands.txt
+*.png
