@@ -11,7 +11,6 @@ model_name = "unitary/toxic-bert"
 print(f'Retrieving {model_name} from transformers...')
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
 
-# Simulating a longer quantization process with tqdm
 print('Quantizing model...')
 # Here we can simulate a process that takes time, for example, if we had multiple layers to quantize
 layers_to_quantize = [nn.Linear]  # Example list of layers to quantize

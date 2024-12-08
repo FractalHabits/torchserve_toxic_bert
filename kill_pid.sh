@@ -1,17 +1,6 @@
-#!/bin/bash
-
-# Check if model_store directory exists
-if [ ! -d "model_store" ]; then
-    # If it doesn't exist, create it and inform the user
-    echo "Creating model_store directory..."
-    mkdir model_store
-    echo "model_store directory created"
-else
-    # If it exists, inform the user
-    echo "model_store directory already exists"
-fi
-
 # Function to check and kill processes on a given port
+port = $(netstat -ano |grep 8080 )
+
 function kill_process_on_port {
     # Declare a local variable 'port' to hold the port number passed to the function
     local port=$1
@@ -45,6 +34,7 @@ echo 'Removing PID file...'
 # Add a small delay and retry mechanism
 for i in {1..3}; do
     if rm -f /c/Users/Administrator/AppData/Local/Temp/.model_server.pid 2>/dev/null; then
+
         echo 'PID file removed'
         break
     else
@@ -52,21 +42,3 @@ for i in {1..3}; do
         sleep 2
     fi
 done
-
-# Archive the model with force flag
-echo 'Archiving model...'
-torch-model-archiver --model-name toxic_bert \
-                    --version 1.0 \
-                    --model-file toxic_bert.pth \
-                    --handler text_handler.py \
-                    --export-path model_store \
-                    --force
-echo 'Model archived'
-
-echo 'Starting TorchServe with config...'
-torchserve --start \
-           --model-store model_store \
-           --models toxic_bert=toxic_bert.mar \
-           --disable-token-auth \
-           --ts-config config.properties \
-           --ncs #> torchserve_output.log 2>&1 & # Log output to a file

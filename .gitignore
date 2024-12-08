@@ -4,6 +4,7 @@ __pycache__/
 
 # Virtual environment directories
 .ts_venv/
+.ts/
 venv/
 env/
 ENV/
